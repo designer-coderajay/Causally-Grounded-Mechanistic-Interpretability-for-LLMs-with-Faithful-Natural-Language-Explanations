@@ -49,6 +49,57 @@ All numbers below are from the thesis (Table 1 and Section 4), n = 50 for the ma
 
 ---
 
+## The idea in one look
+
+<p align="center">
+  <img src="docs/illustrations/19-sufficient-not-necessary.png" alt="A creature between two groups of six squares. Keeping only the six heads keeps the prediction at 100 percent; removing those six heads drops it by only 22 percent because backup circuits carry the rest." width="860"><br>
+  <sub><b>Sufficient is not necessary.</b> The six cited heads keep the whole prediction on their own, but removing them drops it by only 22%.</sub>
+</p>
+
+<p align="center">
+  <img src="docs/illustrations/20-fluent-not-faithful.png" alt="A creature between a short template explanation scoring 60 percent quality and a longer LLM explanation scoring 99 percent. Underneath, the same circuit still has comprehensiveness of 22 percent." width="860"><br>
+  <sub><b>Fluent is not faithful.</b> The same circuit data gives quality 60% with a template and 99% with an LLM, and the comprehensiveness does not change.</sub>
+</p>
+
+<p align="center">
+  <img src="docs/illustrations/21-confidence-no-shortcut.png" alt="Two dials, model confidence and explanation faithfulness, with the note r equals 0.009 and that the two dials move independently. Scope note: GPT-2 small, indirect object identification only." width="860"><br>
+  <sub><b>Confidence is not a shortcut.</b> The correlation between model confidence and explanation faithfulness is r = 0.009 (scope: GPT-2 small, IOI only).</sub>
+</p>
+
+### The thesis as one bench
+
+<p align="center">
+  <img src="docs/anatomy/thesis-bench.gif" alt="An animated isometric bench. A rack of six pegs lights up one by one. A template slip passes through a template press and a quality dial rises to 60 percent while the sufficiency dial reads 100 percent and the comprehensiveness dial 22 percent. An LLM slip passes through an LLM press and the quality dial rises to 99 percent while the other two dials do not move." width="900">
+</p>
+
+| On the bench | In the thesis | Where to look |
+|---|---|---|
+| The rack of six pegs | The six cited attention heads of the IOI circuit | `CIRCUIT_HEADS` in [`src/demo_pipeline.py`](src/demo_pipeline.py), notebook 02 |
+| The template press | The template explanation generator | [`src/explainer.py`](src/explainer.py), notebook 03 |
+| The LLM press | The LLM explanation generator (needs an Anthropic API key) | `generate_learned_explanation` in `src/explainer.py`, notebooks 08 and 09 |
+| Dial "quality" | Explanation quality against a checklist: 60% for the template, 99% for the LLM (n = 30) | notebook 09 |
+| Dials "suff" and "comp" | ERASER sufficiency (100.0%) and comprehensiveness (22.0%), n = 50 | [`src/evaluation.py`](src/evaluation.py), notebook 05 |
+| The "unchanged" lamp | Fluency and grounding are independent axes | thesis Section 4 |
+
+Open [`docs/anatomy/thesis-bench-light.html`](docs/anatomy/thesis-bench-light.html) in a browser to scrub through it (details in [`docs/anatomy/README.md`](docs/anatomy/README.md)). The readings are the thesis means above; the slips and the order the heads light up are drawn for the picture.
+
+### Step by step
+
+| Step | What happens | Notebook |
+|---|---|---|
+| **1. Set up** | Load GPT-2 small with TransformerLens and fix the seeds. | 01 |
+| **2. Find the circuit** | Reproduce the IOI circuit by activation patching and pick the six cited heads. | 02 |
+| **3. Explain it** | Turn the circuit into a natural-language explanation with a template. | 03 |
+| **4. Compare with baselines** | Attention-weight and random baselines. | 04 |
+| **5. Measure faithfulness** | ERASER sufficiency and comprehensiveness on n = 50 prompts. | 05 |
+| **6. Classify the failures** | Three modes: distributed computation, missing cited head, redundant head activity. | 06 |
+| **7. Separate format from faithfulness** | An e-SNLI format study. | 07 |
+| **8. Let an LLM write it** | LLM-generated explanations through the Anthropic API. | 08 |
+| **9. Template against LLM** | Quality 60% against 99% (n = 30), faithfulness unchanged. | 09 |
+| **10. Consolidate** | Headline metrics. | 10 |
+
+---
+
 ## Repository structure
 
     thesis/
@@ -67,9 +118,11 @@ All numbers below are from the thesis (Table 1 and Section 4), n = 50 for the ma
     │   ├── demo_pipeline.py             # Main entry point
     │   └── 00_reproducibility_config.py
     ├── data/                            # IOI prompts, name pairs, configs
-    ├── results/                         # Experiment outputs (.pkl)
+    ├── results/                         # Experiment outputs (.pkl), written by the notebooks; not committed
     ├── plots/                           # Figures used in the thesis
     ├── docs/                            # Supplementary documentation
+    │   ├── anatomy/                     # Interactive bench figure (HTML, GIF, PNG) and its build files
+    │   └── illustrations/               # README illustrations and their generator
     ├── requirements.txt
     ├── LICENSE
     └── README.md
@@ -154,6 +207,8 @@ Example for the canonical IOI prompt. Per-prompt instance values shown; dataset 
        covers the primary mechanism, not the full picture.
 
 > Per-prompt comprehensiveness varies between roughly 22% and 41% across the 50-prompt evaluation. The 22.0% headline figure is the mean. Sufficiency is consistently 100% across prompts.
+
+> **Known discrepancy.** The role labels in the sample output above (for example L7H3 as S-Inhibition and L9H6 as Name Mover) differ for four heads from the labels in `CIRCUIT_HEADS` in `src/demo_pipeline.py` (L7H3 Name Mover (Secondary), L9H6 Name Mover (Tertiary), L10H0 Output Head). The global importance values in the demo are fixed dataset averages stored in that table, not recomputed per run. Check the head roles against Wang et al. before citing either version.
 
 ---
 
